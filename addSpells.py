@@ -1,6 +1,5 @@
 from tkinter import *
-from tkinter import ttk
-import json
+import fileHandler as fh
 
 levels = ["Cantrip", "1st-Level", "2nd-Level", "3rd-Level", "4th-Level", "5th-Level", "6th-Level", "7th-Level", "8th-Level", "9th-Level"]
 
@@ -147,6 +146,7 @@ class addSpell(Toplevel):
     # Function to create a new entry in the json file, takes in window as argument
     def createEntry(args):
         try:
+            spells = fh.getSpells()
             newEntry = entry.copy()
             newEntry["name"] = addSpell.winfo_children(args)[1].winfo_children()[1].get()
             newEntry["source"] = addSpell.winfo_children(args)[2].winfo_children()[1].get()
@@ -162,7 +162,7 @@ class addSpell(Toplevel):
             newEntry["description"] = addSpell.winfo_children(args)[9].winfo_children()[1].get("1.0", "end-1c")
             newEntry["higherLevels"] = addSpell.winfo_children(args)[10].winfo_children()[1].get("1.0", "end-1c")
             newEntry["classes"] = addSpell.winfo_children(args)[11].winfo_children()[1].get().split(",")
-            loadedFile["spells"].append(newEntry)
+            spells["spells"].append(newEntry)
             top = Toplevel(args)
             top.title("Success!")
             top.geometry("300x100")
@@ -175,77 +175,3 @@ class addSpell(Toplevel):
             top.geometry("300x100")
             topLabel = Label(top, text="Error: Unable to add spell for unknown reason.").pack()
             topButton = Button(top, text="OK", command=top.destroy).pack()
-
-class viewSpells(Toplevel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.title("View Spells")
-        self.state("zoomed")
-        self.grid_columnconfigure((0, 1, 2), weight=1)
-
-        label = Label(self, text="Spells", font=("Arial", 24)).grid(row=0, column=1)
-
-        spellTableFrame = Frame(self)
-        spellTableFrame.grid(row=1, column=1)
-        spellTable = ttk.Treeview(spellTableFrame, columns=("src", "lvl", "sch"))
-        spellTable.heading("#0", text="Name", command=lambda: sortTreeviewColumn(spellTable, "#0", False))
-        spellTable.heading("src", text="Source", command=lambda: sortTreeviewColumn(spellTable, "src", False))
-        spellTable.heading("lvl", text="Level", command=lambda: sortTreeviewColumn(spellTable, "lvl", False))
-        spellTable.heading("sch", text="School", command=lambda: sortTreeviewColumn(spellTable, "sch", False))
-        spellTable.pack(side=LEFT)
-
-        scrollBar = Scrollbar(spellTableFrame, orient="vertical", command=spellTable.yview)
-        scrollBar.pack(side=LEFT, fill="y")
-        spellTable.configure(yscrollcommand=scrollBar.set)
-
-        for spell in loadedFile["spells"]:
-            spellTable.insert("", "end", text=spell["name"], values=(spell["source"], spell["level"], spell["school"]))
-
-        exitBtn = Button(self, text="Exit", font=("Arial", 12), width=8, command=self.destroy).grid(row=2, column=1)
-
-        def sortTreeviewColumn(tv, col, reverse=False):
-            l = [(tv.set(k, col), k) for k in tv.get_children('')]
-            l.sort(reverse=reverse)
-            for index, (val, k) in enumerate(l):
-                tv.move(k, '', index)
-            tv.heading(col, command=lambda: sortTreeviewColumn(tv, col, not reverse))
-
-def loadFile():
-    try:
-        with open("spells.json", "r") as file:
-            print("File found. Loaded file.")
-            loadedFile = json.load(file)
-    except FileNotFoundError:
-        print("File not found.")
-        loadedFile = {}
-    return loadedFile
-
-def saveExit():
-    with open("spells.json", "w") as file:
-        file.write(json.dumps(loadedFile, indent=4))
-    root.quit()
-
-def removeSpell():
-    removeKey = "Word of Radiance"
-    for spell in loadedFile["spells"]:
-        if spell["name"] == removeKey:
-            loadedFile["spells"].remove(spell)
-            print(f"Removed {removeKey} from list.")
-            break
-    pass
-
-# Main Program
-
-loadedFile = loadFile()
-print(loadedFile)
-root = Tk()
-root.state("zoomed")
-root.title("D&D Spellbook Database")
-
-menuLabel = Label(root, text="D&D Spellbook Database", font=("Arial", 24)).pack()
-
-addSpellBtn = Button(root, text="Add Spell", font=("Arial", 12), width=12, command=addSpell).pack(side=TOP, pady=(50,0))
-viewSpellBtn = Button(root, text="View Spells", font=("Arial", 12), width=12, command=viewSpells).pack(side=TOP)
-exitBtn = Button(root, text="Exit", font=("Arial", 12), width=12, command=saveExit).pack(side=TOP, pady=(0,50))
-
-root.mainloop()
