@@ -104,7 +104,12 @@ class addSpell(Toplevel):
         spellDescriptionFrame = Frame(self)
         spellDescriptionFrame.grid(row=9, column=1)
         spellDescriptionLabel = Label(spellDescriptionFrame, text="Description:").pack(side=LEFT)
-        spellDescriptionEntry = Text(spellDescriptionFrame, width=100, height=20).pack(side=LEFT)
+        spellDescriptionEntry = Text(spellDescriptionFrame, width=120, height=10)
+        spellDescriptionEntry.pack(side=LEFT)
+        scrollY = Scrollbar(spellDescriptionFrame, orient=VERTICAL, command=spellDescriptionEntry.yview)
+        scrollY.pack(side=LEFT, fill=Y)
+        spellDescriptionEntry['yscrollcommand'] = scrollY.set
+        
     
         # Frame for Higher Levels Description and appropriate widgets
         spellHigherLevelsFrame = Frame(self)
