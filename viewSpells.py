@@ -11,22 +11,29 @@ class viewSpells(Toplevel):
 
         label = Label(self, text="Spells", font=("Arial", 24)).grid(row=0, column=1)
         spells = fh.getSpells()
+        check = False
         
+
         def showSpellDetails(event):
+            nonlocal check
             tree = event.widget
             selection = [tree.item(item)["text"] for item in tree.selection()]
     
-    
+            if check:
+                spellFrame = self.winfo_children()[3]
+                spellFrame.destroy()
+
             spells = fh.getSpells()
             for spell in spells["spells"]:
                 if spell["name"] in selection[0]:
+                    check = True
                     spellDetailsFrame = Frame(self)
                     spellDetailsFrame.grid(row=2, column=0, columnspan=3)
                     spellDetailsFrame.config(width=800, height=300, background="white")
-                    spellDetailsFrame.grid_columnconfigure(0, minsize=800, weight=1)
-                    
+                    spellDetailsFrame.grid_columnconfigure(0, weight=1)
+
                     spellDetailsScrollbar = Scrollbar(spellDetailsFrame, orient="vertical")
-                    spellDetailsScrollbar.grid(row=0, column=1, sticky=N+S, rowspan=2)
+                    spellDetailsScrollbar.grid(row=0, column=1, sticky=N+S, rowspan=10)
                     
                     # Spell Name
                     spellName = Label(spellDetailsFrame, text=spell["name"], font=("Arial", 16), background="white")
@@ -96,14 +103,32 @@ class viewSpells(Toplevel):
                     spellDescriptionFrame.grid(row=7, column=0, sticky=W)
                     spellDescriptionLabel = Label(spellDescriptionFrame, text=spell["description"].replace("\\n", "\n"), font=("Arial", 10), background="white", wraplength=800, justify=LEFT)
                     spellDescriptionLabel.pack(side=LEFT)
+                    
+                    # Spell Higher Level
+                    if spell["higherLevels"] != "":
+                        spellHigherLevelFrame = Frame(spellDetailsFrame, background="white")
+                        spellHigherLevelFrame.grid(row=8, column=0, sticky=W)
+                        spellHigherLevelLabel = Label(spellHigherLevelFrame, text="At Higher Levels:", font=("Arial Bold", 10), background="white")
+                        spellHigherLevelLabel.pack(side=LEFT, anchor=NW)
+                        spellHigherLevelActual = Label(spellHigherLevelFrame, text=spell["higherLevels"], font=("Arial", 10), background="white", wraplength=650, justify=LEFT)
+                        spellHigherLevelActual.pack(side=LEFT)
+
+                    # Spell Classes
+                    spellClassesFrame = Frame(spellDetailsFrame, background="white")
+                    spellClassesFrame.grid(row=9, column=0, sticky=W)
+                    spellClassesLabel = Label(spellClassesFrame, text="Classes:", font=("Arial Bold", 10), background="white")
+                    spellClassesLabel.pack(side=LEFT)
+                    spellClassesActual = Label(spellClassesFrame, text=", ".join(spell["classes"]), font=("Arial", 10), background="white")
+                    spellClassesActual.pack(side=LEFT)
+                    break
 
         spellTableFrame = Frame(self)
         spellTableFrame.grid(row=1, column=1)
         spellTable = ttk.Treeview(spellTableFrame, columns=("src", "lvl", "sch"))
-        spellTable.heading("#0", text="Name", command=lambda: sortTreeviewColumn(spellTable, "#0", False))
-        spellTable.heading("src", text="Source", command=lambda: sortTreeviewColumn(spellTable, "src", False))
-        spellTable.heading("lvl", text="Level", command=lambda: sortTreeviewColumn(spellTable, "lvl", False))
-        spellTable.heading("sch", text="School", command=lambda: sortTreeviewColumn(spellTable, "sch", False))
+        spellTable.heading("#0", text="Name")
+        spellTable.heading("src", text="Source")
+        spellTable.heading("lvl", text="Level")
+        spellTable.heading("sch", text="School")
         spellTable.pack(side=LEFT)
         spellTable.bind("<<TreeviewSelect>>", showSpellDetails)
 
@@ -117,12 +142,3 @@ class viewSpells(Toplevel):
         # Exit Button
         exitBtn = Button(self, text="Exit", font=("Arial", 12), width=8, command=self.destroy)
         exitBtn.grid(row=3, column=1)
-
-        def sortTreeviewColumn(tv, col, reverse=False):
-            l = [(tv.item(k)["text"], k) for k in tv.get_children()] #Display column #0 cannot be set
-            l.sort(key=lambda t: t[0], reverse=reverse)
-
-            for index, (val, k) in enumerate(l):
-                tv.move(k, '', index)
-
-            tv.heading(col, command=lambda: sortTreeviewColumn(tv, col, not reverse))
